@@ -18,9 +18,9 @@ FaceEnhance::FaceEnhance(string model_path)
     AllocatorWithDefaultOptions allocator;
     for (int i = 0; i < numInputNodes; i++)
     {
-        input_names.push_back(ort_session->GetInputName(i, allocator)); /// 低版本onnxruntime的接口函数
-        ////AllocatedStringPtr input_name_Ptr = ort_session->GetInputNameAllocated(i, allocator);  /// 高版本onnxruntime的接口函数
-        ////input_names.push_back(input_name_Ptr.get()); /// 高版本onnxruntime的接口函数
+        //input_names.push_back(ort_session->GetInputName(i, allocator)); /// 低版本onnxruntime的接口函数
+        AllocatedStringPtr input_name_Ptr = ort_session->GetInputNameAllocated(i, allocator);  /// 高版本onnxruntime的接口函数
+        input_names.push_back(input_name_Ptr.get()); /// 高版本onnxruntime的接口函数
         Ort::TypeInfo input_type_info = ort_session->GetInputTypeInfo(i);
         auto input_tensor_info = input_type_info.GetTensorTypeAndShapeInfo();
         auto input_dims = input_tensor_info.GetShape();
@@ -28,9 +28,9 @@ FaceEnhance::FaceEnhance(string model_path)
     }
     for (int i = 0; i < numOutputNodes; i++)
     {
-        output_names.push_back(ort_session->GetOutputName(i, allocator)); /// 低版本onnxruntime的接口函数
-        ////AllocatedStringPtr output_name_Ptr= ort_session->GetInputNameAllocated(i, allocator);
-        ////output_names.push_back(output_name_Ptr.get()); /// 高版本onnxruntime的接口函数
+        //output_names.push_back(ort_session->GetOutputName(i, allocator)); /// 低版本onnxruntime的接口函数
+        AllocatedStringPtr output_name_Ptr= ort_session->GetInputNameAllocated(i, allocator);
+        output_names.push_back(output_name_Ptr.get()); /// 高版本onnxruntime的接口函数
         Ort::TypeInfo output_type_info = ort_session->GetOutputTypeInfo(i);
         auto output_tensor_info = output_type_info.GetTensorTypeAndShapeInfo();
         auto output_dims = output_tensor_info.GetShape();
