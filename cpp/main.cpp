@@ -43,10 +43,12 @@ int main()
 	position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
 	vector<Point2f> target_landmark_5;
 	detect_68landmarks_net.detect(target_img, boxes[position], target_landmark_5);
+	cout << "hello7777"<<endl;
 
 	Mat swapimg = swap_face_net.process(target_img, source_face_embedding, target_landmark_5);
+	cout << "hello888"<<endl;
 	Mat resultimg = enhance_face_net.process(swapimg, target_landmark_5);
-	
+	cout << "hello999999"<<endl;
 	imwrite("resultimg.jpg", resultimg);
 
 	/*static const string kWinName = "Deep learning face swap use onnxruntime";
