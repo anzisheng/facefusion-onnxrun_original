@@ -13,7 +13,7 @@ int main()
 	string source_path = "images/5.jpg";
 	string target_path = "images/target.jpg";
     ////cout << "wwww000"<<endl;
-	preciseStopwatch stopwatch;
+	
 	////图片路径和onnx文件的路径，要确保写正确，才能使程序正常运行的
 	Yolov8Face detect_face_net("weights/yoloface_8n.onnx");
 	////cout << "www11hello000"<<endl;
@@ -24,9 +24,10 @@ int main()
 	SwapFace swap_face_net("weights/inswapper_128.onnx");
 	FaceEnhance enhance_face_net("weights/gfpgan_1.4.onnx");
 	////cout << "wwww999"<<endl;
+	preciseStopwatch stopwatch;
 	Mat source_img = imread(source_path);
 	Mat target_img = imread(target_path);
-	
+	//preciseStopwatch stopwatch;
 	////cout << "hello111: " <<source_img.rows<<source_img.cols <<endl;
 
     vector<Bbox> boxes;
