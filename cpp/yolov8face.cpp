@@ -14,16 +14,16 @@ Yolov8Face::Yolov8Face(string model_path, const float conf_thres, const float io
     ort_session = new Session(env, model_path.c_str(), sessionOptions); ////linux写法
 
     size_t numInputNodes = ort_session->GetInputCount();
-    cout << "numInputNodes = " << numInputNodes <<endl;
+    //cout << "numInputNodes = " << numInputNodes <<endl;
     size_t numOutputNodes = ort_session->GetOutputCount();
-    cout << "numOutputNodes = " << numOutputNodes <<endl;
+    //cout << "numOutputNodes = " << numOutputNodes <<endl;
     AllocatorWithDefaultOptions allocator;
     for (int i = 0; i < numInputNodes; i++)
     {
         //input_names.push_back(ort_session->GetInputName(i, allocator));      ///低版本onnxruntime的接口函�?
         //input_names.push_back(ort_session->GetInputNameAllocated(i, allocator));      ///低版本onnxruntime的接口函�?
         AllocatedStringPtr input_name_Ptr = ort_session->GetInputNameAllocated(i, allocator);  /// 高版本onnxruntime的接口函�?
-        cout <<"input_name_Ptr.get():" << input_name_Ptr.get()<<endl;
+        //cout <<"input_name_Ptr.get():" << input_name_Ptr.get()<<endl;
         //input_names.push_back(input_name_Ptr.get()); /// 高版本onnxruntime的接口函�?
         input_names.push_back("images"); /// 高版本onnxruntime的接口函�?
 
@@ -36,7 +36,7 @@ Yolov8Face::Yolov8Face(string model_path, const float conf_thres, const float io
     {
         //output_names.push_back(ort_session->GetOutputName(i, allocator));  ///低版本onnxruntime的接口函�?
         AllocatedStringPtr output_name_Ptr= ort_session->GetOutputNameAllocated(i, allocator);
-        cout << "output=" << output_name_Ptr.get()<<endl;
+        //cout << "output=" << output_name_Ptr.get()<<endl;
         //output_names.push_back(output_name_Ptr.get()); /// 高版本onnxruntime的接口函�?
         output_names.push_back("output0"); /// 高版本onnxruntime的接口函�?
 
@@ -92,7 +92,7 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes)
     std::vector<int64_t> input_img_shape = {1, 3, this->input_height, this->input_width};
     Value input_tensor_ = Value::CreateTensor<float>(memory_info_handler, this->input_image.data(), this->input_image.size(), input_img_shape.data(), input_img_shape.size());
     Ort::RunOptions runOptions;
-    cout <<"Yolov8Face::detect 222" << this->input_names.data()<< "  "<<output_names.size()<<endl;
+    //cout <<"Yolov8Face::detect 222" << this->input_names.data()<< "  "<<output_names.size()<<endl;
     vector<Value> ort_outputs = this->ort_session->Run(runOptions, this->input_names.data(), &input_tensor_, 1, this->output_names.data(), output_names.size());
 
     float *pdata = ort_outputs[0].GetTensorMutableData<float>(); /// 形状�?(1, 20, 8400),不考虑�?0维batchsize，每一列的长度20,�?4个元素是检测框坐标(cx,cy,w,h)，第4个元素是置信度，剩下�?15个元素是5个关键点坐标x,y和置信度
@@ -133,16 +133,16 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes)
 ////只返回检测框,因为在下游的模块�?,置信度和5个关键点这两个信息在后续的模块里没有用到
 void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes)
 {
-    cout <<"Yolov8Face::detect 000" <<endl;
+    //cout <<"Yolov8Face::detect 000" <<endl;
     this->preprocess(srcimg);
-    cout <<"Yolov8Face::detect 111: "<<this->input_height<<" ,"<< this->input_width<<endl;
+    //cout <<"Yolov8Face::detect 111: "<<this->input_height<<" ,"<< this->input_width<<endl;
     std::vector<int64_t> input_img_shape = {1, 3, this->input_height, this->input_width};
     Value input_tensor_ = Value::CreateTensor<float>(memory_info_handler, this->input_image.data(), this->input_image.size(), input_img_shape.data(), input_img_shape.size());
-    cout <<"Yolov8Face::detect 222, input_tensor_ = "<< input_tensor_ <<endl;
+    //cout <<"Yolov8Face::detect 222, input_tensor_ = "<< input_tensor_ <<endl;
     Ort::RunOptions runOptions;
-    cout <<"Yolov8Face::detect 222::" << this->input_names.data()<< "  "<<input_names[0]<<endl;
+    //cout <<"Yolov8Face::detect 222::" << this->input_names.data()<< "  "<<input_names[0]<<endl;
     vector<Value> ort_outputs = this->ort_session->Run(runOptions, this->input_names.data(), &input_tensor_, 1, this->output_names.data(), output_names.size());
-    cout <<"Yolov8Face::detect 333" <<endl;
+    //cout <<"Yolov8Face::detect 333" <<endl;
     float *pdata = ort_outputs[0].GetTensorMutableData<float>(); /// 形状�?(1, 20, 8400),不考虑�?0维batchsize，每一列的长度20,�?4个元素是检测框坐标(cx,cy,w,h)，第4个元素是置信度，剩下�?15个元素是5个关键点坐标x,y和置信度
     const int num_box = ort_outputs[0].GetTensorTypeAndShapeInfo().GetShape()[2];
     vector<Bbox> bounding_box_raw;

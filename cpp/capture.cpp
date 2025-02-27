@@ -13,6 +13,6 @@ int main() {
     const char* model_path = "2dfan4.onnx";  // 替换为你的模型路径
     Ort::Session session(env, model_path, session_options);
 
-    std::cout << "ONNX Runtime initialized successfully!" << std::endl;
+    std:://cout << "ONNX Runtime initialized successfully!" << std::endl;
     return 0;
 }

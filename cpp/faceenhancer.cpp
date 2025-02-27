@@ -20,12 +20,12 @@ FaceEnhance::FaceEnhance(string model_path)
     {
         //input_names.push_back(ort_session->GetInputName(i, allocator)); /// 低版本onnxruntime的接口函数
         AllocatedStringPtr input_name_Ptr = ort_session->GetInputNameAllocated(i, allocator);  /// 高版本onnxruntime的接口函数
-        cout << "FaceEnhance input: " << input_name_Ptr.get()<<endl;
+        //cout << "FaceEnhance input: " << input_name_Ptr.get()<<endl;
         //input_names.push_back(input_name_Ptr.get()); /// 高版本onnxruntime的接口函数
         const char* expected_name = "input";
         if (std::strcmp(input_name_Ptr.get(), expected_name) == 0) 
         {
-            cout << "push into input" << endl;
+            //cout << "push into input" << endl;
             input_names.push_back("input"); /// 高版本onnxruntime的接口函数
 
         }
@@ -40,11 +40,11 @@ FaceEnhance::FaceEnhance(string model_path)
     {
         //output_names.push_back(ort_session->GetOutputName(i, allocator)); /// 低版本onnxruntime的接口函数
         AllocatedStringPtr output_name_Ptr= ort_session->GetOutputNameAllocated(i, allocator);
-        cout << "FaceEnhance output: " << output_name_Ptr.get()<<endl;
+        //cout << "FaceEnhance output: " << output_name_Ptr.get()<<endl;
         const char* expected_name = "output";
         if (std::strcmp(output_name_Ptr.get(), expected_name) == 0) 
         {
-            cout << "push into output" << endl;
+            //cout << "push into output" << endl;
             output_names.push_back("output"); /// 高版本onnxruntime的接口函数
 
         }

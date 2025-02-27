@@ -20,12 +20,12 @@ FaceEmbdding::FaceEmbdding(string model_path)
     {
         //input_names.push_back(ort_session->GetInputName(i, allocator)); /// 低版本onnxruntime的接口函数
         AllocatedStringPtr input_name_Ptr = ort_session->GetInputNameAllocated(i, allocator);  /// 高版本onnxruntime的接口函数
-        cout << "FaceEmbdding input: " << input_name_Ptr.get()<<endl;
+        //cout << "FaceEmbdding input: " << input_name_Ptr.get()<<endl;
         //input_names.push_back(input_name_Ptr.get()); /// 高版本onnxruntime的接口函数
         const char* expected_name = "input.1";
         if (std::strcmp(input_name_Ptr.get(), expected_name) == 0) 
         {
-            cout << "push into input.1" << endl;
+            //cout << "push into input.1" << endl;
             input_names.push_back("input.1"); /// 高版本onnxruntime的接口函数
 
         }
@@ -38,11 +38,11 @@ FaceEmbdding::FaceEmbdding(string model_path)
     {
         //output_names.push_back(ort_session->GetOutputName(i, allocator)); /// 低版本onnxruntime的接口函数
         AllocatedStringPtr output_name_Ptr= ort_session->GetOutputNameAllocated(i, allocator);
-        cout << "FaceEmbdding output: " << output_name_Ptr.get()<<endl;
+        //cout << "FaceEmbdding output: " << output_name_Ptr.get()<<endl;
         const char* expected_name = "683";
         if (std::strcmp(output_name_Ptr.get(), expected_name) == 0) 
         {
-            cout << "push into 683" << endl;
+            //cout << "push into 683" << endl;
             output_names.push_back("683"); /// 高版本onnxruntime的接口函数
 
         }

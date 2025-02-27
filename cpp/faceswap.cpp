@@ -20,19 +20,19 @@ SwapFace::SwapFace(string model_path)
     {
         //input_names.push_back(ort_session->GetInputNameAllocated(i, allocator)); /// 低版本onnxruntime的接口函数
         AllocatedStringPtr input_name_Ptr = ort_session->GetInputNameAllocated(i, allocator);  /// 高版本onnxruntime的接口函数
-        cout << "SwapFace input: " << input_name_Ptr.get()<<endl;
+        //cout << "SwapFace input: " << input_name_Ptr.get()<<endl;
         //input_names.push_back(input_name_Ptr.get()); /// 高版本onnxruntime的接口函数
         const char* expected_name = "target";
         if (std::strcmp(input_name_Ptr.get(), expected_name) == 0) 
         {
-            cout << "push into target" << endl;
+            //cout << "push into target" << endl;
             input_names.push_back("target"); /// 高版本onnxruntime的接口函数
 
         }
         const char* expected_name2 = "source";
         if (std::strcmp(input_name_Ptr.get(), expected_name2) == 0) 
         {
-            cout << "push into source" << endl;
+            //cout << "push into source" << endl;
             input_names.push_back("source"); /// 高版本onnxruntime的接口函数
 
         }
@@ -48,11 +48,11 @@ SwapFace::SwapFace(string model_path)
     {
         //output_names.push_back(ort_session->GetOutputName(i, allocator)); /// 低版本onnxruntime的接口函数
         AllocatedStringPtr output_name_Ptr= ort_session->GetOutputNameAllocated(i, allocator);
-        cout << "SwapFace output: " << output_name_Ptr.get()<<endl;
+        //cout << "SwapFace output: " << output_name_Ptr.get()<<endl;
         const char* expected_name = "output";
         if (std::strcmp(output_name_Ptr.get(), expected_name) == 0) 
         {
-            cout << "push into output" << endl;
+            //cout << "push into output" << endl;
             output_names.push_back("output"); /// 高版本onnxruntime的接口函数
 
         }
@@ -68,11 +68,11 @@ SwapFace::SwapFace(string model_path)
     
     const int length = this->len_feature*this->len_feature;
     this->model_matrix = new float[length];
-    cout<<"start read model_matrix.bin"<<endl;
+    //cout<<"start read model_matrix.bin"<<endl;
     FILE* fp = fopen("model_matrix.bin", "rb");
     fread(this->model_matrix, sizeof(float), length, fp);//导入数据
     fclose(fp);//关闭文件
-    cout<<"read model_matrix.bin finish"<<endl;
+    //cout<<"read model_matrix.bin finish"<<endl;
 
     ////在这里就直接定义了，没有像python程序里的那样normed_template = TEMPLATES.get(template) * crop_size
     this->normed_template.emplace_back(Point2f(46.29459968, 51.69629952));
