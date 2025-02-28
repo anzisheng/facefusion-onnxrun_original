@@ -98,6 +98,25 @@ FaceEmbdding* face_embedding_net = NULL;
 SwapFace*  swap_face_net = NULL;
 FaceEnhance* enhance_face_net = NULL;
 
+void init_model()
+{
+    //FaceEnhance enhance_face_net = NULL;
+	////图片路径和onnx文件的路径，要确保写正确，才能使程序正常运行的
+	if(detect_face_net == NULL)
+		detect_face_net = new Yolov8Face("weights/yoloface_8n.onnx");
+	////cout << "www11hello000"<<endl;
+	if(detect_68landmarks_net == NULL)
+		detect_68landmarks_net = new Face68Landmarks("weights/2dfan4.onnx");
+	////cout << "1111"<<endl;
+	if(face_embedding_net == NULL)
+		face_embedding_net = new FaceEmbdding("weights/arcface_w600k_r50.onnx");
+	////cout << "2222"<<endl;
+	if(swap_face_net == NULL)
+		swap_face_net = new SwapFace ("weights/inswapper_128.onnx");
+	if(enhance_face_net == NULL)
+		enhance_face_net = new FaceEnhance ("weights/gfpgan_1.4.onnx");
+}
+
 void free_faces()
 {
     //Yolov8Face* detect_face_net = NULL;
@@ -118,21 +137,7 @@ string swap_faces(string photo, string style, server* s, websocketpp::connection
 	string target_path = style;
 	
 	
-	//FaceEnhance enhance_face_net = NULL;
-	////图片路径和onnx文件的路径，要确保写正确，才能使程序正常运行的
-	if(detect_face_net == NULL)
-		detect_face_net = new Yolov8Face("weights/yoloface_8n.onnx");
-	////cout << "www11hello000"<<endl;
-	if(detect_68landmarks_net == NULL)
-		detect_68landmarks_net = new Face68Landmarks("weights/2dfan4.onnx");
-	////cout << "1111"<<endl;
-	if(face_embedding_net == NULL)
-		face_embedding_net = new FaceEmbdding("weights/arcface_w600k_r50.onnx");
-	////cout << "2222"<<endl;
-	if(swap_face_net == NULL)
-		swap_face_net = new SwapFace ("weights/inswapper_128.onnx");
-	if(enhance_face_net == NULL)
-		enhance_face_net = new FaceEnhance ("weights/gfpgan_1.4.onnx");
+	
 	////cout << "wwww999"<<endl;
 	preciseStopwatch stopwatch;
 	Mat source_img = imread(source_path);
@@ -179,7 +184,7 @@ string swap_faces(string photo, string style, server* s, websocketpp::connection
     file = style;
     pos = file.find_last_of('/');
     cout << "pos of style is " << pos <<endl;
-    std::string path_style(file.substr(0, pos));
+    std::string path_style((pos < 0)? "" : file.substr(0, pos));
     std::string name_style(file.substr(pos + 1));
     //name_photo = name_style.substr(0, name_style.rfind("."));
     cout << "name style: " << name_style<<endl;
@@ -325,7 +330,7 @@ void consumerFunction(server* s, websocketpp::connection_hdl hdl,message_ptr msg
     cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++=================================="<<endl;
     auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
     cout << "total time is " << totalElapsedTimeMs/1000 <<" S"<<endl;
-    free_faces();
+    //free_faces();
 }
 
 
@@ -629,6 +634,7 @@ int main() {
 	//////////////////////////
 	// Create a server endpoint
     server echo_server;
+    init_model();
     std::cout << "hello, I am a cpu server!"<< std::endl;
 	try {
         // Set logging settings
@@ -649,6 +655,8 @@ int main() {
 
         // Start the ASIO io_service run loop
         echo_server.run();
+        cout << "handling over, free the model."<<endl;
+        free_faces();
     } catch (websocketpp::exception const & e) {
         std::cout << e.what() << std::endl;
     } catch (...) {
