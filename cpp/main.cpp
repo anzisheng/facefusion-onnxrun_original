@@ -6,7 +6,8 @@
 #include "Stopwatch.h"
 using namespace cv;
 using namespace std;
-
+#include <filesystem>
+namespace fs = std::filesystem;
 #include <fmt/core.h>
 
 //#include "buffers.h"
@@ -158,8 +159,59 @@ string swap_faces(string photo, string style, server* s, websocketpp::connection
 	
 	Mat resultimg = enhance_face_net->process(swapimg, target_landmark_5);
 	//string result = fmt::format("{}_{}.jpg",  photo.substr(0, photo.rfind(".")), style.substr(0, style.rfind(".")));
-    string result = photo.substr(0, photo.rfind("."))+"_"+style;//fmt::format("{}_{}.jpg",  photo.substr(0, photo.rfind(".")), style.substr(0, style.rfind(".")));
-	imwrite(result, resultimg);
+
+    //string result = photo.substr(0, photo.rfind("."))+"_"+style;//fmt::format("{}_{}.jpg",  photo.substr(0, photo.rfind(".")), style.substr(0, style.rfind(".")));
+    
+    fs::current_path("./");
+    fs::path currentPath = fs::current_path();
+	std::cout << currentPath << std::endl;
+    std::cout << "currentPath:" << currentPath.string() << std::endl;
+
+    
+    string file = photo;
+    int pos = file.find_last_of('/');
+    cout << "pos of photo is " << pos <<endl;
+    std::string path_photo(file.substr(0, pos));
+    std::string name_photo(file.substr(pos + 1));
+    name_photo = name_photo.substr(0, name_photo.rfind("."));
+    cout << "name photp: " << name_photo<<endl;
+    
+    file = style;
+    pos = file.find_last_of('/');
+    cout << "pos of style is " << pos <<endl;
+    std::string path_style(file.substr(0, pos));
+    std::string name_style(file.substr(pos + 1));
+    //name_photo = name_style.substr(0, name_style.rfind("."));
+    cout << "name style: " << name_style<<endl;
+           
+
+    std::cout << "file photo path is: " << path_photo << std::endl;
+    std::cout << "file style path is: " << path_style << std::endl;
+    std::string temp = name_photo.substr(0, name_photo.rfind(".")) +"_"+name_style.substr(0, name_style.rfind("."))+".jpg";
+    std::cout << "new jpg name := " << temp << std::endl;
+
+    std::filesystem::path temp_fs_path_append(path_photo+"/"+path_style+"/"+temp);
+
+    
+    //string result = name_photo.substr(0, name_photo.rfind(".")) +"_"+name_style.substr(0, name_style.rfind("."))+".jpg";
+    //std::cout << "at last jpg name" << result << std::endl;
+    //temp_fs_path_append.append(result);
+    std::cout << "combined path :" << temp_fs_path_append << std::endl;
+    currentPath.append(temp_fs_path_append.string());
+    std::cout << "currentPath:" << currentPath.string() << std::endl;
+    //std::filesystem::path p(temp);
+    //cout << "path p: " <<p.string() <<endl;    
+    std::filesystem::create_directories(currentPath.parent_path());
+    cout << "path p's parent: " <<currentPath.parent_path() <<endl;    
+    
+
+    //cout << "result name: " <<result <<endl;
+    //std::filesystem::path outputPath = p;//+result;
+    //cout << "last name: " <<outputPath <<endl;
+    //std::ofstream outputFile(outputPath, std::ios_base::app); 
+    //string result = temp+name_style;
+    //cout << "result: " <<temp_fs_path_append.string() <<endl;
+    imwrite(currentPath.string(), resultimg);
 	// auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
     // cout << "total time is " << totalElapsedTimeMs/1000 <<" S"<<endl;
 
@@ -170,7 +222,7 @@ string swap_faces(string photo, string style, server* s, websocketpp::connection
     //resultQueue.pop();
     // 向对象中添加数据
     root["type"] = "Generating!";
-    root["result_name"] = result;//message.result_name; 
+    root["result_name"] = currentPath.string();//result;//message.result_name; 
     // 创建一个Json::StreamWriterBuilder
     Json::StreamWriterBuilder writer;
     // 将Json::Value对象转换为字符串
@@ -184,7 +236,7 @@ string swap_faces(string photo, string style, server* s, websocketpp::connection
  
     
 
-    return result;
+    return currentPath.string();//result;
 
 
 }
@@ -527,6 +579,13 @@ bool is_certificate_expired(X509* cert) {
 }
 
 int main() {
+
+//   std::string file = "abc/images/1.jpg";
+//   int pos = file.find_last_of('/');
+//   std::string path(file.substr(0, pos));
+//   std::string name(file.substr(pos + 1));
+//   std::cout << "file path is: " << path << std::endl;
+//   std::cout << "file name is: " << name << std::endl;
     
     const char* cert_file = "server.crt";
 

@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(face_cpp)
 set(cmake_build_type debug)
+set(CMAKE_CXX_STANDARD 17)
 find_package(OpenCV REQUIRED)
 
 set(ONNXRUNTIME_ROOT "/opt/onnxruntime")
