@@ -45,5 +45,7 @@ target_link_libraries(cpp_api PUBLIC ${OpenCV_LIBS}  ${CMAKE_THREAD_LIBS_INIT} $
 #target_include_directories(face_cpp PRIVATE ${ONNXRUNTIME_INCLUDE_DIR})
 
 add_executable(face_cpp cpp/main.cpp)
+add_executable(face_intime cpp/in_time.cpp)
 # 链接 ONNX Runtime 库
 target_link_libraries(face_cpp PUBLIC cpp_api  fmt::fmt -lssl -lcrypto jsoncpp_lib )
+target_link_libraries(face_intime PUBLIC cpp_api  fmt::fmt -lssl -lcrypto jsoncpp_lib )
