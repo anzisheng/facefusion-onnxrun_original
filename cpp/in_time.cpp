@@ -171,18 +171,26 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
             // // 将Json::Value对象转换为字符串
             //std::string 
             std::string output2 = Json::writeString(writer, root2);
-       std::thread([s, hdl, output, output2]() {
+            std::vector<std::string> outVector;
+            outVector.push_back(output);
+            outVector.push_back(output2);
+
+       std::thread([s, hdl, outVector]() {
         // 发送第一条消息
-        s->send(hdl, output, websocketpp::frame::opcode::text);
+        s->send(hdl, outVector[0], websocketpp::frame::opcode::text);
         std::this_thread::sleep_for(std::chrono::seconds(2)); // 模拟延迟
 
         // 发送第二条消息
-        s->send(hdl, output2, websocketpp::frame::opcode::text);
+        s->send(hdl, outVector[1], websocketpp::frame::opcode::text);
         std::this_thread::sleep_for(std::chrono::seconds(2)); // 模拟延迟
 
         // 发送第三条消息
-        s->send(hdl, "Message 3", websocketpp::frame::opcode::text);
+        //s->send(hdl, "Message 3", websocketpp::frame::opcode::text);
     }).detach(); // 分离线程，避免阻塞主线程
+
+
+
+
 }
 int main() {
     // 创建服务器实例
