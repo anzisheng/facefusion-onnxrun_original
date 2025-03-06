@@ -131,7 +131,7 @@ void free_faces()
 	if(enhance_face_net) delete enhance_face_net;
     //if(yoloV8) delete yoloV8;
 }
-string swap_faces(string photo, string style, server* s, websocketpp::connection_hdl hdl,message_ptr msg){
+string swap_faces(string photo, string style){
 	////cout << "hello000"<<endl;
 	string source_path = photo;
 	string target_path = style;
@@ -222,22 +222,22 @@ string swap_faces(string photo, string style, server* s, websocketpp::connection
 
 	
 	
-	Json::Value root; 
-    //TaskResult message = resultQueue.front();
-    //resultQueue.pop();
-    // 向对象中添加数据
-    root["type"] = "Generating!";
-    root["result_name"] = currentPath.string();//result;//message.result_name; 
-    // 创建一个Json::StreamWriterBuilder
-    Json::StreamWriterBuilder writer;
-    // 将Json::Value对象转换为字符串
-    std::string output = Json::writeString(writer, root);
+	// Json::Value root; 
+    // //TaskResult message = resultQueue.front();
+    // //resultQueue.pop();
+    // // 向对象中添加数据
+    // root["type"] = "Generating!";
+    // root["result_name"] = currentPath.string();//result;//message.result_name; 
+    // // 创建一个Json::StreamWriterBuilder
+    // Json::StreamWriterBuilder writer;
+    // // 将Json::Value对象转换为字符串
+    // std::string output = Json::writeString(writer, root);
     
-    // 打印输出
-    //std::cout << output << std::endl;
-    //s->send(hdl, msg->get_payload(), msg->get_opcode());
-    s->send(hdl, output, msg->get_opcode());
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    // // 打印输出
+    // //std::cout << output << std::endl;
+    // //s->send(hdl, msg->get_payload(), msg->get_opcode());
+    // s->send(hdl, output, msg->get_opcode());
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1));
  
     
 
@@ -254,19 +254,19 @@ void producerFunction(Json::Value &root) {
     for (int i = 0; i < StyleNum; i++)
     {
         /* code */
-        TaskSocket message(PhotoName, root["styleName"][i]["name"].asString());
+        //TaskSocket message(PhotoName, root["styleName"][i]["name"].asString());
 
-        //将消息添加到队列
-        {
-            std::lock_guard<std::mutex> lock(mtx);
-            messageQueue.push(message);
-            std::cout << "Produced message: " << message.photo<<"," <<message.style << std::endl;
-        }
-           // 通知等待的消费者线程
-         cvs.notify_one();
+        // //将消息添加到队列
+        // {
+        //     std::lock_guard<std::mutex> lock(mtx);
+        //     messageQueue.push(message);
+        //     std::cout << "Produced message: " << message.photo<<"," <<message.style << std::endl;
+        // }
+        //    // 通知等待的消费者线程
+        //  cvs.notify_one();
 
-        // 模拟一些工作
-         std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        // // 模拟一些工作
+        // std::this_thread::sleep_for(std::chrono::milliseconds(1));
      }
 
     }
@@ -290,7 +290,7 @@ void consumerFunction(server* s, websocketpp::connection_hdl hdl,message_ptr msg
          if (message.style == "-10.jpg") {
              break;
          }
-        string swap_result = swap_faces(message.photo,message.style, s, hdl, msg);
+        string swap_result = "temp";//swap_faces(message.photo,message.style, s, hdl, msg);
         cout << "swap_result:   " << swap_result <<endl;
         TaskResult  reultMsg = TaskResult(swap_result);        
         //将消息添加到队列
@@ -336,84 +336,6 @@ void consumerFunction(server* s, websocketpp::connection_hdl hdl,message_ptr msg
 
 
 
-int main2()
-{
-	////cout << "hello000"<<endl;
-	string source_path = "images/5.jpg";
-	string target_path = "images/target.jpg";
-    ////cout << "wwww000"<<endl;
-	
-	Yolov8Face* detect_face_net = NULL;
-	Face68Landmarks* detect_68landmarks_net = NULL;
-	FaceEmbdding* face_embedding_net = NULL;
-	SwapFace*  swap_face_net = NULL;
-	FaceEnhance* enhance_face_net = NULL;
-	//FaceEnhance enhance_face_net = NULL;
-	////图片路径和onnx文件的路径，要确保写正确，才能使程序正常运行的
-	if(detect_face_net == NULL)
-		detect_face_net = new Yolov8Face("weights/yoloface_8n.onnx");
-	////cout << "www11hello000"<<endl;
-	if(detect_68landmarks_net == NULL)
-		detect_68landmarks_net = new Face68Landmarks("weights/2dfan4.onnx");
-	////cout << "1111"<<endl;
-	if(face_embedding_net == NULL)
-		face_embedding_net = new FaceEmbdding("weights/arcface_w600k_r50.onnx");
-	////cout << "2222"<<endl;
-	if(swap_face_net == NULL)
-		swap_face_net = new SwapFace ("weights/inswapper_128.onnx");
-	if(enhance_face_net == NULL)
-		enhance_face_net = new FaceEnhance ("weights/gfpgan_1.4.onnx");
-	////cout << "wwww999"<<endl;
-	preciseStopwatch stopwatch;
-	Mat source_img = imread(source_path);
-	Mat target_img = imread(target_path);
-	//preciseStopwatch stopwatch;
-	////cout << "hello111: " <<source_img.rows<<source_img.cols <<endl;
-
-    vector<Bbox> boxes;
-	////cout << "hello12222"<<endl;
-	detect_face_net->detect(source_img, boxes);
-	////cout << "hello12244"<<endl;
-	int position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
-	vector<Point2f> face_landmark_5of68;
-	////cout << "hello12255"<<endl;
-	vector<Point2f> face68landmarks = detect_68landmarks_net->detect(source_img, boxes[position], face_landmark_5of68);
-	////cout << "hello133"<<endl;
-	vector<float> source_face_embedding = face_embedding_net->detect(source_img, face_landmark_5of68);
-	////cout << "hello222"<<endl;
-	detect_face_net->detect(target_img, boxes);
-	position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
-	vector<Point2f> target_landmark_5;
-	detect_68landmarks_net->detect(target_img, boxes[position], target_landmark_5);
-	////cout << "hello7777"<<endl;
-
-	Mat swapimg = swap_face_net->process(target_img, source_face_embedding, target_landmark_5);
-	////cout << "hello888"<<endl;
-	Mat resultimg = enhance_face_net->process(swapimg, target_landmark_5);
-	////cout << "hello999999"<<endl;
-	imwrite("resultimg.jpg", resultimg);
-	auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
-    cout << "total time is " << totalElapsedTimeMs/1000 <<" S"<<endl;
-
-	//Yolov8Face* detect_face_net = NULL;
-	if(detect_face_net) delete detect_face_net;
-	//Face68Landmarks* detect_68landmarks_net = NULL;
-	if(detect_68landmarks_net) delete detect_68landmarks_net;
-	//FaceEmbdding* face_embedding_net = NULL;
-	if(face_embedding_net) delete face_embedding_net;
-	//SwapFace*  swap_face_net = NULL;
-	if(swap_face_net) delete swap_face_net;
-	//FaceEnhance* enhance_face_net = NULL;
-	if(enhance_face_net) delete enhance_face_net;
-	
-	/*static const string kWinName = "Deep learning face swap use onnxruntime";
-	namedWindow(kWinName, WINDOW_NORMAL);
-	imshow(kWinName, resultimg);
-	waitKey(0);
-	destroyAllWindows();*/
-	return 0;
-}
-
 // Define a callback to handle incoming messages
 void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
     std::cout << "on_message called with hdl: " << hdl.lock().get()
@@ -443,14 +365,38 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
             //return 1;
         }
     
-    
-    
-    std::thread producer(producerFunction, std::ref(root));
-    std::thread consumer(consumerFunction, s, hdl,  msg);
+    int StyleNum = root["styleName"].size();
+    string PhotoName = root["sessionID"].asString()+"/0.jpg";
+    std::vector<std::string>  messageVec;
+    Json::Value root_message;
+    Json::StreamWriterBuilder writer;
+    // // 将Json::Value对象转换为字符串
+    root_message["type"] = "generating";
+    root_message["result_name"] = "abc";//swap_result;
+    std::string output = Json::writeString(writer, root_message);
+    messageVec.push_back(output);
 
-    // 等待线程执行完成
-    consumer.join();
-    producer.join();
+    std::thread([s, hdl,StyleNum,PhotoName, writer, root, root_message, messageVec]() {
+
+        for (int i = 0; i < StyleNum; i++)
+        {
+            std::string swap_result = swap_faces(PhotoName, root["styleName"][i]["name"].asString());
+            //root_message["result_name"] = "abc";//swap_result;
+            //std::string output = Json::writeString(writer, root_message);
+            //messageVec.push_back((output));
+            s->send(hdl, messageVec[0], websocketpp::frame::opcode::text);
+        }             
+    }).detach(); // 分离线程，避免阻塞主线程
+
+    
+
+    
+    // std::thread producer(producerFunction, std::ref(root));
+    // std::thread consumer(consumerFunction, s, hdl,  msg);
+
+    // // 等待线程执行完成
+    // consumer.join();
+    // producer.join();
     
     cout << "-----------------------"<<endl;
 
