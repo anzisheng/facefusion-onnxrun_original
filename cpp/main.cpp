@@ -131,6 +131,7 @@ void free_faces()
 	if(enhance_face_net) delete enhance_face_net;
     //if(yoloV8) delete yoloV8;
 }
+Mat resultimg;
 string swap_faces(string photo, string style){
 	////cout << "hello000"<<endl;
 	string source_path = photo;
@@ -162,7 +163,7 @@ string swap_faces(string photo, string style){
 
 	Mat swapimg = swap_face_net->process(target_img, source_face_embedding, target_landmark_5);
 	
-	Mat resultimg = enhance_face_net->process(swapimg, target_landmark_5);
+	resultimg = enhance_face_net->process(swapimg, target_landmark_5);
 	//string result = fmt::format("{}_{}.jpg",  photo.substr(0, photo.rfind(".")), style.substr(0, style.rfind(".")));
 
     //string result = photo.substr(0, photo.rfind("."))+"_"+style;//fmt::format("{}_{}.jpg",  photo.substr(0, photo.rfind(".")), style.substr(0, style.rfind(".")));
@@ -242,6 +243,88 @@ string swap_faces(string photo, string style){
     
 
     return currentPath.string();//result;
+
+
+}
+
+std::string combine_path(std::string photo, std::string style)
+{
+    fs::current_path("./");
+    fs::path currentPath = fs::current_path();
+	std::cout << currentPath << std::endl;
+    std::cout << "currentPath:" << currentPath.string() << std::endl;
+
+    
+    string file = photo;
+    int pos = file.find_last_of('/');
+    cout << "pos of photo is " << pos <<endl;
+    std::string path_photo(file.substr(0, pos));
+    std::string name_photo(file.substr(pos + 1));
+    name_photo = name_photo.substr(0, name_photo.rfind("."));
+    cout << "name photp: " << name_photo<<endl;
+    
+    file = style;
+    pos = file.find_last_of('/');
+    cout << "pos of style is " << pos <<endl;
+    std::string path_style((pos < 0)? "" : file.substr(0, pos));
+    std::string name_style(file.substr(pos + 1));
+    //name_photo = name_style.substr(0, name_style.rfind("."));
+    cout << "name style: " << name_style<<endl;
+           
+
+    std::cout << "file photo path is: " << path_photo << std::endl;
+    std::cout << "file style path is: " << path_style << std::endl;
+    std::string temp = name_photo.substr(0, name_photo.rfind(".")) +"_"+name_style.substr(0, name_style.rfind("."))+".jpg";
+    std::cout << "new jpg name := " << temp << std::endl;
+
+    std::filesystem::path temp_fs_path_append(path_photo+"/"+path_style+"/"+temp);
+
+    
+    //string result = name_photo.substr(0, name_photo.rfind(".")) +"_"+name_style.substr(0, name_style.rfind("."))+".jpg";
+    //std::cout << "at last jpg name" << result << std::endl;
+    //temp_fs_path_append.append(result);
+    std::cout << "combined path :" << temp_fs_path_append << std::endl;
+    currentPath.append(temp_fs_path_append.string());
+    std::cout << "currentPath:" << currentPath.string() << std::endl;
+    //std::filesystem::path p(temp);
+    //cout << "path p: " <<p.string() <<endl;    
+    std::filesystem::create_directories(currentPath.parent_path());
+    cout << "path p's parent: " <<currentPath.parent_path() <<endl;    
+    
+
+    //cout << "result name: " <<result <<endl;
+    //std::filesystem::path outputPath = p;//+result;
+    //cout << "last name: " <<outputPath <<endl;
+    //std::ofstream outputFile(outputPath, std::ios_base::app); 
+    //string result = temp+name_style;
+    //cout << "result: " <<temp_fs_path_append.string() <<endl;
+    //imwrite(currentPath.string(), resultimg);
+	// auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
+    // cout << "total time is " << totalElapsedTimeMs/1000 <<" S"<<endl;
+
+	
+	
+	// Json::Value root; 
+    // //TaskResult message = resultQueue.front();
+    // //resultQueue.pop();
+    // // 向对象中添加数据
+    // root["type"] = "Generating!";
+    // root["result_name"] = currentPath.string();//result;//message.result_name; 
+    // // 创建一个Json::StreamWriterBuilder
+    // Json::StreamWriterBuilder writer;
+    // // 将Json::Value对象转换为字符串
+    // std::string output = Json::writeString(writer, root);
+    
+    // // 打印输出
+    // //std::cout << output << std::endl;
+    // //s->send(hdl, msg->get_payload(), msg->get_opcode());
+    // s->send(hdl, output, msg->get_opcode());
+    // std::this_thread::sleep_for(std::chrono::milliseconds(1));
+ 
+    
+
+    return currentPath.string();//result;
+
 
 
 }
@@ -370,13 +453,23 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
     std::vector<std::string>  messageVec;
     Json::Value root_message;
     Json::StreamWriterBuilder writer;
-    // // 将Json::Value对象转换为字符串
-    root_message["type"] = "generating";
-    root_message["result_name"] = "abc";//swap_result;
-    std::string output = Json::writeString(writer, root_message);
-    messageVec.push_back(output);
-
-    std::thread([s, hdl,StyleNum,PhotoName, writer, root, root_message, messageVec]() {
+    
+    Json::Value root2;
+    root2["type"] = "Complete!";
+    //root["result_name"] = message.result_name; 
+    Json::StreamWriterBuilder writer2;
+    // 将Json::Value对象转换为字符串
+    std::string output2 = Json::writeString(writer2, root2);
+    //s->send(hdl, output2, msg->get_opcode()); 
+    for (int i = 0; i < StyleNum; i++)
+    {
+        root_message["type"] = "generating";
+        root_message["result_name"] = combine_path(PhotoName, root["styleName"][i]["name"].asString());//"abc";//swap_result;
+        cout << "combine name ......" <<root_message["result_name"]<<endl;
+        std::string output = Json::writeString(writer, root_message);
+        messageVec.push_back(output);
+        }
+    std::thread([s, hdl,StyleNum,PhotoName, writer, root, output2, messageVec]() {
 
         for (int i = 0; i < StyleNum; i++)
         {
@@ -384,8 +477,10 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
             //root_message["result_name"] = "abc";//swap_result;
             //std::string output = Json::writeString(writer, root_message);
             //messageVec.push_back((output));
-            s->send(hdl, messageVec[0], websocketpp::frame::opcode::text);
-        }             
+            s->send(hdl, messageVec[i], websocketpp::frame::opcode::text);
+        }          
+
+        s->send(hdl, output2, websocketpp::frame::opcode::text);
     }).detach(); // 分离线程，避免阻塞主线程
 
     
@@ -405,13 +500,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 
     //order cr;
     //from_json(commands, cr);
-    Json::Value root2;
-    root2["type"] = "Complete!";
-    //root["result_name"] = message.result_name; 
-    Json::StreamWriterBuilder writer2;
-    // 将Json::Value对象转换为字符串
-    std::string output2 = Json::writeString(writer2, root2);
-    s->send(hdl, output2, msg->get_opcode()); 
+    
 
     std::cout <<"waiting.... for post next order!"<<std::endl;
 
