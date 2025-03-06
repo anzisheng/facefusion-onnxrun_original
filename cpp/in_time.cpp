@@ -156,13 +156,28 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
             }
         //);
         */
-       std::thread([s, hdl]() {
+            Json::Value root2; 
+            root2["type"] = "Generating!";
+            root2["result_name"] = "abc.jpg";//currentPath.string();//result;//message.result_name; 
+            // 创建一个Json::StreamWriterBuilder
+            Json::StreamWriterBuilder writer;
+            // // 将Json::Value对象转换为字符串
+            std::string output = Json::writeString(writer, root2);
+
+            root2["type"] = "Generating00000!";
+            root2["result_name"] = "abc.jpg";//currentPath.string();//result;//message.result_name; 
+            // 创建一个Json::StreamWriterBuilder
+            //Json::StreamWriterBuilder writer;
+            // // 将Json::Value对象转换为字符串
+            //std::string 
+            std::string output2 = Json::writeString(writer, root2);
+       std::thread([s, hdl, output, output2]() {
         // 发送第一条消息
-        s->send(hdl, "Message 1", websocketpp::frame::opcode::text);
+        s->send(hdl, output, websocketpp::frame::opcode::text);
         std::this_thread::sleep_for(std::chrono::seconds(2)); // 模拟延迟
 
         // 发送第二条消息
-        s->send(hdl, "Message 2", websocketpp::frame::opcode::text);
+        s->send(hdl, output2, websocketpp::frame::opcode::text);
         std::this_thread::sleep_for(std::chrono::seconds(2)); // 模拟延迟
 
         // 发送第三条消息
