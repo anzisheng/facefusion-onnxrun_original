@@ -79,6 +79,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
               << " and message: " << msg->get_payload()
               << std::endl;
 
+   /*           
             Json::Value root2; 
             root2["type"] = "Generating!";
             root2["result_name"] = "abc.jpg";//currentPath.string();//result;//message.result_name; 
@@ -154,6 +155,19 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
                 }
             }
         //);
+        */
+       std::thread([s, hdl]() {
+        // 发送第一条消息
+        s->send(hdl, "Message 1", websocketpp::frame::opcode::text);
+        std::this_thread::sleep_for(std::chrono::seconds(2)); // 模拟延迟
+
+        // 发送第二条消息
+        s->send(hdl, "Message 2", websocketpp::frame::opcode::text);
+        std::this_thread::sleep_for(std::chrono::seconds(2)); // 模拟延迟
+
+        // 发送第三条消息
+        s->send(hdl, "Message 3", websocketpp::frame::opcode::text);
+    }).detach(); // 分离线程，避免阻塞主线程
 }
 int main() {
     // 创建服务器实例
