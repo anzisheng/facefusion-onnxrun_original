@@ -461,6 +461,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
     // 将Json::Value对象转换为字符串
     std::string output2 = Json::writeString(writer2, root2);
     //s->send(hdl, output2, msg->get_opcode()); 
+    
     for (int i = 0; i < StyleNum; i++)
     {
         root_message["type"] = "generating";
@@ -472,17 +473,21 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
     std::thread([s, hdl,StyleNum,PhotoName, writer, root, output2, messageVec]() {
 
         for (int i = 0; i < StyleNum; i++)
-        {
+        {   preciseStopwatch stopwatch2;
             std::string swap_result = swap_faces(PhotoName, root["styleName"][i]["name"].asString());
             //root_message["result_name"] = "abc";//swap_result;
             //std::string output = Json::writeString(writer, root_message);
             //messageVec.push_back((output));
             s->send(hdl, messageVec[i], websocketpp::frame::opcode::text);
+            auto totalElapsedTimeMs = stopwatch2.elapsedTime<float, std::chrono::milliseconds>();
+            cout << "=================total time is  "<< totalElapsedTimeMs/1000 <<" S"<<endl;
+    //cout << "++++++++++++++ all handle "<<StyleNum<< " pictures;" << "total time is  "<< totalElapsedTimeMs/1000 <<" S"<<endl;
         }          
 
         s->send(hdl, output2, websocketpp::frame::opcode::text);
     }).detach(); // 分离线程，避免阻塞主线程
 
+    
     
 
     
