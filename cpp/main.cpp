@@ -412,7 +412,7 @@ void consumerFunction(server* s, websocketpp::connection_hdl hdl,message_ptr msg
     
     cout << "+++++++++++++++++++++++++++++++++++++++++++++++++++++=================================="<<endl;
     auto totalElapsedTimeMs = stopwatch.elapsedTime<float, std::chrono::milliseconds>();
-    cout << "total time is " << totalElapsedTimeMs/1000 <<" S"<<endl;
+    cout << "This picture spend " << totalElapsedTimeMs/1000 <<" S"<<endl;
     //free_faces();
 }
 
@@ -480,7 +480,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
             //messageVec.push_back((output));
             s->send(hdl, messageVec[i], websocketpp::frame::opcode::text);
             auto totalElapsedTimeMs = stopwatch2.elapsedTime<float, std::chrono::milliseconds>();
-            cout << "=================total time is  "<< totalElapsedTimeMs/1000 <<" S"<<endl;
+            cout << "=================this picture spend  "<< totalElapsedTimeMs/1000 <<" S"<<endl;
     //cout << "++++++++++++++ all handle "<<StyleNum<< " pictures;" << "total time is  "<< totalElapsedTimeMs/1000 <<" S"<<endl;
         }          
 
@@ -592,7 +592,11 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 #include <openssl/err.h>
 #include <iostream>
 #include <ctime>
-
+#include <cstring>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
 // 检查证书是否过期
 bool is_certificate_expired(X509* cert) {
     if (!cert) {
@@ -622,17 +626,66 @@ bool is_certificate_expired(X509* cert) {
 
     return false; // 证书未过期
 }
+// 获取网卡 MAC 地址
+std::string get_mac_address(const std::string& interface = "eth0") {
+    std::string mac_address;
+    std::ifstream file("/sys/class/net/" + interface + "/address");
+    if (file.is_open()) {
+        std::getline(file, mac_address);
+        file.close();
+    } else {
+        std::cerr << "无法获取网卡 MAC 地址。" << std::endl;
+    }
+    return mac_address;
+}
+
+// 检查 MAC 地址是否匹配
+bool is_mac_address_valid(X509* cert, const std::string& mac_address) {
+    if (!cert) return false;
+
+    // 从证书中获取扩展字段（假设 MAC 地址存储在扩展字段中）
+    int index = X509_get_ext_by_NID(cert, NID_subject_alt_name, -1);
+    if (index < 0) return false;
+
+    X509_EXTENSION* ext = X509_get_ext(cert, index);
+    if (!ext) return false;
+
+    ASN1_OCTET_STRING* data = X509_EXTENSION_get_data(ext);
+    if (!data) return false;
+
+    // 比较 MAC 地址
+    std::string cert_mac(reinterpret_cast<char*>(data->data), data->length);
+    return cert_mac == mac_address;
+}
+
+#include <dirent.h>  // 目录操作
+
+// 获取所有网卡的 MAC 地址
+void get_all_mac_addresses() {
+    DIR* dir;
+    struct dirent* ent;
+    if ((dir = opendir("/sys/class/net/")) != nullptr) {
+        while ((ent = readdir(dir)) != nullptr) {
+            std::string interface = ent->d_name;
+            if (interface != "." && interface != "..") {
+                std::string mac_address = get_mac_address(interface);
+                if (!mac_address.empty()) {
+                    std::cout << "网卡 " << interface << " 的 MAC 地址: " << mac_address << std::endl;
+                }
+            }
+        }
+        closedir(dir);
+    } else {
+        std::cerr << "无法打开 /sys/class/net/ 目录。" << std::endl;
+    }
+}
 
 int main() {
-
-//   std::string file = "abc/images/1.jpg";
-//   int pos = file.find_last_of('/');
-//   std::string path(file.substr(0, pos));
-//   std::string name(file.substr(pos + 1));
-//   std::cout << "file path is: " << path << std::endl;
-//   std::cout << "file name is: " << name << std::endl;
     
     const char* cert_file = "server.crt";
+    get_all_mac_addresses();
+    std::string mac_address = get_mac_address();
+    cout <<"MAC address: " << mac_address <<endl;
 
     // 初始化 OpenSSL
     OpenSSL_add_all_algorithms();
@@ -663,6 +716,15 @@ int main() {
     } else {
         std::cout << "证书未过期。请提交订单!" << std::endl;
     }
+    /*
+     // 检查 MAC 地址是否匹配
+     if (is_mac_address_valid(cert, mac_address)) {
+        std::cout << "MAC 地址匹配。" << std::endl;
+    } else {
+        std::cout << "MAC 地址不匹配。" << std::endl;
+    }
+    */
+
 
     // 释放资源
     X509_free(cert);
