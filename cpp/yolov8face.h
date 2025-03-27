@@ -7,6 +7,22 @@
 //#include <cuda_provider_factory.h>  ///如果使用cuda加速，需要取消注释
 #include <onnxruntime_cxx_api.h>
 #include"utils.h"
+struct Object {
+    // The object class.
+    int label{};
+    // The detection's confidence probability.
+    float probability{};
+    // The object bounding box rectangle.
+    cv::Rect_<float> rect;
+    // Semantic segmentation mask
+    cv::Mat boxMask;
+    // Pose estimation key points
+    std::vector<float> kps{};
+};
+
+
+
+
 
 
 class Yolov8Face
@@ -14,6 +30,11 @@ class Yolov8Face
 public:
 	Yolov8Face(std::string modelpath, const float conf_thres=0.5, const float iou_thresh=0.4);
 	void detect(cv::Mat srcimg, std::vector<Bbox> &boxes);   ////只返回检测框,置信度和5个关键点这两个信息在后续的模块里没有用到
+	void drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale = 2);
+
+	std::vector<std::string> CLASS_NAMES;
+
+
 private:
 	void preprocess(cv::Mat img);
 	std::vector<float> input_image;
@@ -23,6 +44,9 @@ private:
 	float ratio_width;
 	float conf_threshold;
 	float iou_threshold;
+	 // Object classes as strings
+	 
+
 
 	Ort::Env env = Ort::Env(ORT_LOGGING_LEVEL_ERROR, "Face Detect");
 	Ort::Session *ort_session = nullptr;

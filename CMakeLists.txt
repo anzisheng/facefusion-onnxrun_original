@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
+add_definitions(-DSHOW) 
 project(face_cpp)
 set(cmake_build_type debug)
 set(CMAKE_CXX_STANDARD 17)
