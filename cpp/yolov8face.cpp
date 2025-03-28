@@ -90,9 +90,11 @@ void Yolov8Face::preprocess(Mat srcimg)
 
 
 ////只返回检测框,因为在下游的模块�?,置信度和5个关键点这两个信息在后续的模块里没有用到
-void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes)
+void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, bool photo)
 {
     //cout <<"Yolov8Face::detect 000" <<endl;
+    Mat log_img = srcimg.clone();
+
     this->preprocess(srcimg);
     //cout <<"Yolov8Face::detect 111: "<<this->input_height<<" ,"<< this->input_width<<endl;
     std::vector<int64_t> input_img_shape = {1, 3, this->input_height, this->input_width};
@@ -130,23 +132,39 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes)
         const int ind = keep_inds[i];
         boxes[i] = bounding_box_raw[ind];
     }
-    if(boxes.size() > 0)
-    {   
-        cv::Scalar color = cv::Scalar(1, 1, 1);
+    cv::Scalar color = cv::Scalar(1, 1, 1);
 
+    if(boxes.size() > 0)
+    {          
         //cv::Rect rect(cv::Point(boxes[0].xmin, boxes[0].ymin), float(boxes[0].xmax - boxes[0].xmin), float(boxes[0].ymax -boxes[0].ymin));
         
+        // int x = boxes[0].xmin;  
+        // int y = boxes[0].ymin;  
+        // int width = boxes[0].xmax - boxes[0].xmin;  
+        // int height= boxes[0].ymax - boxes[0].ymin;  
+        // cv::Rect rect(x, y, width, height);
+        // cv::rectangle(srcimg, rect, cv::Scalar(0, 0, 255) ,4);
 
-        int x = boxes[0].xmin;  
-        int y = boxes[0].ymin;  
-        int width = boxes[0].xmax - boxes[0].xmin;  
-        int height= boxes[0].ymax - boxes[0].ymin;  
-        cv::Rect rect(x, y, width, height);
-        cv::rectangle(srcimg, rect, color,-1);
+        for (size_t i = 0; i < keep_num; i++)
+        {
+            /* code */
+            int x = boxes[i].xmin;  
+            int y = boxes[i].ymin;  
+            int width = boxes[i].xmax - boxes[i].xmin;  
+            int height= boxes[i].ymax - boxes[i].ymin;  
+            cv::Rect rect(x, y, width, height);
+            cv::rectangle(log_img, rect, (i == 0) ? cv::Scalar(0, 0, 255):cv::Scalar(0, 0, 0) ,4);
+            
+        }
+    }
+    if(photo)
+    {
+        int pos = file.find_last_of('/');
+        cout << "pos of photo issss:::: " << pos <<endl;
+        std::string path_photo(file.substr(0, pos));
 
 
-
-
+        imwrite(path_photo+"/log.jpg", log_img);
     }
 }
 void Yolov8Face::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale) {
@@ -183,7 +201,7 @@ void Yolov8Face::drawObjectLabels(cv::Mat &image, const std::vector<Object> &obj
 
         // Draw rectangles and text
         char text[256];
-        //sprintf(text, "%s %.1f%%", CLASS_NAMES[object.label].c_str(), object.probability * 100);
+        sprintf(text, "%s %.1f%%", CLASS_NAMES[object.label].c_str(), object.probability * 100);
 
         int baseLine = 0;
         cv::Size labelSize = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.35 * scale, scale, &baseLine);

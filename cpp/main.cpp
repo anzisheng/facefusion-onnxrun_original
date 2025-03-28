@@ -146,7 +146,7 @@ string swap_faces(string photo, string style){
 
     vector<Bbox> boxes;
 
-	detect_face_net->detect(source_img, boxes);
+	detect_face_net->detect(source_img, boxes, photo, true);
 	////cout << "hello12244"<<endl;
 	int position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
 	vector<Point2f> face_landmark_5of68;
@@ -155,7 +155,7 @@ string swap_faces(string photo, string style){
 	
 	vector<float> source_face_embedding = face_embedding_net->detect(source_img, face_landmark_5of68);
 	
-	detect_face_net->detect(target_img, boxes);
+	detect_face_net->detect(target_img, boxes, style, false);
 	position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
 	vector<Point2f> target_landmark_5;
 	detect_68landmarks_net->detect(target_img, boxes[position], target_landmark_5);
