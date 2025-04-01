@@ -32,8 +32,13 @@ public:
 	void detect(cv::Mat srcimg, std::vector<Bbox> &boxes,std::string file, bool photo = true);   ////只返回检测框,置信度和5个关键点这两个信息在后续的模块里没有用到
 	void drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale = 2);
 	void postprocessDetect(cv::Mat& log_img, float *pdata,std::vector<Bbox> &boxes, int num_box, int channels,  std::string file);
+	std::vector<Object> postprocessDetect_gpu(float* pData, int num_box, int channels,  std::string file);
+	
 
 	std::vector<std::string> CLASS_NAMES;
+	float m_ratio;
+	float m_imgWidth;
+	float m_imgHeight;
 
 
 private:

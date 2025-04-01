@@ -154,6 +154,91 @@ void Yolov8Face::preprocess(Mat srcimg)
 
 
 }
+std::vector<Object>  Yolov8Face::postprocessDetect_gpu( float* pData, int num_box, int channels,  std::string file)
+{
+
+    auto numChannels = channels;//outputDims[0].d[1]; //20
+    auto numAnchors = num_box;//outputDims[0].d[2]; //8400
+
+    std::vector<cv::Rect> bboxes;
+    std::vector<float> scores;
+    std::vector<int> labels;
+    std::vector<int> indices;
+
+    //m_imgHeight = rgbMat.rows;
+    //m_imgWidth = rgbMat.cols;
+    //m_ratio = 1.f / std::min(inputDims[0].d[2] / static_cast<float>(rgbMat.cols), inputDims[0].d[1] / static_cast<float>(rgbMat.rows));
+
+    cv::Mat output = cv::Mat(numChannels, numAnchors, CV_32F, pData);
+    output = output.t();
+
+    int numClasses = 1;
+    float PROBABILITY_THRESHOLD = 0.25f;
+
+    // Get all the YOLO proposals
+    for (int i = 0; i < numAnchors; i++) {
+        auto rowPtr = output.row(i).ptr<float>();
+        auto bboxesPtr = rowPtr;
+        auto scoresPtr = rowPtr + 4;
+        auto maxSPtr = std::max_element(scoresPtr, scoresPtr + numClasses);
+        float score = *maxSPtr;
+        if (score > PROBABILITY_THRESHOLD) {
+            float x = *bboxesPtr++;
+            float y = *bboxesPtr++;
+            float w = *bboxesPtr++;
+            float h = *bboxesPtr;
+
+            float x0 = std::clamp((x - 0.5f * w) * m_ratio, 0.f, m_imgWidth);
+            float y0 = std::clamp((y - 0.5f * h) * m_ratio, 0.f, m_imgHeight);
+            float x1 = std::clamp((x + 0.5f * w) * m_ratio, 0.f, m_imgWidth);
+            float y1 = std::clamp((y + 0.5f * h) * m_ratio, 0.f, m_imgHeight);
+
+            int label = maxSPtr - scoresPtr;
+            cv::Rect_<float> bbox;
+            bbox.x = x0;
+            bbox.y = y0;
+            bbox.width = x1 - x0;
+            bbox.height = y1 - y0;
+
+            bboxes.push_back(bbox);
+            labels.push_back(label);
+            scores.push_back(score);
+        }
+    }
+
+
+// Run NMS
+    cv::dnn::NMSBoxes(bboxes, scores, /*labels, PROBABILITY_THRESHOLD*/ 0.25, /*NMS_THRESHOLD*/0.65, indices);
+    std::cout << "indices size :" << indices.size()<<std::endl;
+    std::vector<Object> objects;
+    int TOP_K = 100;
+    // Choose the top k detections
+    int cnt = 0;
+    for (auto &chosenIdx : indices) {
+        if (cnt >= TOP_K) {
+            break;
+        }
+
+        Object obj{};
+        obj.probability = scores[chosenIdx];
+        obj.label = labels[chosenIdx];
+        obj.rect = bboxes[chosenIdx];
+        objects.push_back(obj);
+
+        cnt += 1;
+        std::cout << "cnt = " <<cnt <<std::endl;
+    }
+
+
+
+    return objects;
+
+
+
+
+}
+
+
 
 
 
@@ -164,6 +249,13 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, 
     Mat log_img = srcimg.clone();
 
     this->preprocess(srcimg);
+
+    this->m_imgHeight = srcimg.rows;
+    this->m_imgWidth =  srcimg.cols;
+    this->m_ratio = 1.f / std::min(640/ static_cast<float>(srcimg.cols), 640 / static_cast<float>(srcimg.rows));
+
+
+
     //cout <<"Yolov8Face::detect 111: "<<this->input_height<<" ,"<< this->input_width<<endl;
     std::vector<int64_t> input_img_shape = {1, 3, this->input_height, this->input_width};
     Value input_tensor_ = Value::CreateTensor<float>(memory_info_handler, this->input_image.data(), this->input_image.size(), input_img_shape.data(), input_img_shape.size());
@@ -175,7 +267,13 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, 
     float *pdata = ort_outputs[0].GetTensorMutableData<float>(); /// 形状�?(1, 20, 8400),不考虑�?0维batchsize，每一列的长度20,�?4个元素是检测框坐标(cx,cy,w,h)，第4个元素是置信度，剩下�?15个元素是5个关键点坐标x,y和置信度
     const int num_box = ort_outputs[0].GetTensorTypeAndShapeInfo().GetShape()[2];
     int channels = ort_outputs[0].GetTensorTypeAndShapeInfo().GetShape()[1];
-    postprocessDetect(log_img, pdata, boxes, num_box,channels, file);
+    //postprocessDetect(log_img, pdata, boxes, num_box,channels, file);
+    std::vector<Object> ret;
+    ret = postprocessDetect_gpu(pdata, num_box, channels, file);
+
+    std::cout << "hellollllllllllllllllllll"<<endl;
+    std::cout << "ret size:" <<ret.size() << std::endl;
+    std::cout << "hellol22222222222222222lll"<<endl;
 
     /*
     std::cout << "num_box is : " << num_box <<std::endl;
@@ -230,8 +328,9 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, 
             cv::rectangle(log_img, rect, (i == 0) ? cv::Scalar(0, 0, 255):cv::Scalar(0, 0, 0) ,4);
             
         }
-    }
-    if(photo)
+    }*/
+    //if(photo)
+    drawObjectLabels(log_img, ret, 2);
     {
         int pos = file.find_last_of('/');
         cout << "pos of photo issss:::: " << pos <<endl;
@@ -239,7 +338,7 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, 
 
 
         imwrite(path_photo+"/log.jpg", log_img);
-    }*/
+    }
 }
 void Yolov8Face::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale) {
     // If segmentation information is present, start with that
