@@ -143,14 +143,14 @@ void Yolov8Face::preprocess(Mat srcimg)
         }
     }
     //if(photo)
-    {
-        int pos = file.find_last_of('/');
-        cout << "pos of photo issss:::: " << pos <<endl;
-        std::string path_photo(file.substr(0, pos));
+    // {
+    //     int pos = file.find_last_of('/');
+    //     cout << "pos of photo issss:::: " << pos <<endl;
+    //     std::string path_photo(file.substr(0, pos));
 
 
-        imwrite(path_photo+"/log.jpg", log_img);
-    }
+    //     imwrite(path_photo+"/log.jpg", log_img);
+    // }
 
 
 }
@@ -243,7 +243,8 @@ std::vector<Object>  Yolov8Face::postprocessDetect_gpu( float* pData, int num_bo
 
 
 ////只返回检测框,因为在下游的模块�?,置信度和5个关键点这两个信息在后续的模块里没有用到
-void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, bool photo)
+
+void Yolov8Face::detect(Mat srcimg, std::vector<Object> &boxes, std::string file, bool photo)
 {
     //cout <<"Yolov8Face::detect 000" <<endl;
     Mat log_img = srcimg.clone();
@@ -268,11 +269,11 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, 
     const int num_box = ort_outputs[0].GetTensorTypeAndShapeInfo().GetShape()[2];
     int channels = ort_outputs[0].GetTensorTypeAndShapeInfo().GetShape()[1];
     //postprocessDetect(log_img, pdata, boxes, num_box,channels, file);
-    std::vector<Object> ret;
-    ret = postprocessDetect_gpu(pdata, num_box, channels, file);
+    //std::vector<Object> ret;
+    boxes = postprocessDetect_gpu(pdata, num_box, channels, file);
 
     std::cout << "hellollllllllllllllllllll"<<endl;
-    std::cout << "ret size:" <<ret.size() << std::endl;
+    //std::cout << "ret size:" <<ret.size() << std::endl;
     std::cout << "hellol22222222222222222lll"<<endl;
 
     /*
@@ -330,15 +331,16 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, 
         }
     }*/
     //if(photo)
-    drawObjectLabels(log_img, ret, 2);
-    {
-        int pos = file.find_last_of('/');
-        cout << "pos of photo issss:::: " << pos <<endl;
-        std::string path_photo(file.substr(0, pos));
+    drawObjectLabels(log_img, boxes, 2);
+    std::cout << "hello99999999l"<<endl;
+    // {
+    //     int pos = file.find_last_of('/');
+    //     cout << "pos of photo issss:::: " << pos <<endl;
+    //     std::string path_photo(file.substr(0, pos));
 
 
-        imwrite(path_photo+"/log.jpg", log_img);
-    }
+    //     imwrite(path_photo+"/log.jpg", log_img);
+    // }
 }
 void Yolov8Face::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale) {
     // If segmentation information is present, start with that

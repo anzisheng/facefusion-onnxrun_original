@@ -144,20 +144,31 @@ string swap_faces(string photo, string style){
 	Mat source_img = imread(source_path);
 	Mat target_img = imread(target_path);
 
-    vector<Bbox> boxes;
+    vector<Object> boxes_object;
 
-	detect_face_net->detect(source_img, boxes, photo, true);
-	////cout << "hello12244"<<endl;
+	detect_face_net->detect(source_img, boxes_object , photo, true);
+
+	cout << "hello12244"<<endl;
 	int position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
 	vector<Point2f> face_landmark_5of68;
-	
+	vector<Bbox> boxes(boxes_object.size());
+     boxes[position].xmin =  boxes_object[position].rect.x;
+     boxes[position].ymin =  boxes_object[position].rect.y; 
+     boxes[position].xmax =  boxes_object[position].rect.x + boxes_object[position].rect.width;
+     boxes[position].xmin =  boxes_object[position].rect.y +  boxes_object[position].rect.height;
+cout << "hello12255"<<endl;
 	vector<Point2f> face68landmarks = detect_68landmarks_net->detect(source_img, boxes[position], face_landmark_5of68);
-	
+	cout << "hello1226655"<<endl;
 	vector<float> source_face_embedding = face_embedding_net->detect(source_img, face_landmark_5of68);
 	
-	detect_face_net->detect(target_img, boxes, style, false);
+	detect_face_net->detect(target_img, boxes_object, style, false);
+
+
 	position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
 	vector<Point2f> target_landmark_5;
+
+
+    
 	detect_68landmarks_net->detect(target_img, boxes[position], target_landmark_5);
 	
 

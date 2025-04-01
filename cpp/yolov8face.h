@@ -29,7 +29,7 @@ class Yolov8Face
 {
 public:
 	Yolov8Face(std::string modelpath, const float conf_thres=0.5, const float iou_thresh=0.4);
-	void detect(cv::Mat srcimg, std::vector<Bbox> &boxes,std::string file, bool photo = true);   ////只返回检测框,置信度和5个关键点这两个信息在后续的模块里没有用到
+	void detect(cv::Mat srcimg, std::vector<Object> &boxes,std::string file, bool photo = true);   ////只返回检测框,置信度和5个关键点这两个信息在后续的模块里没有用到
 	void drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale = 2);
 	void postprocessDetect(cv::Mat& log_img, float *pdata,std::vector<Bbox> &boxes, int num_box, int channels,  std::string file);
 	std::vector<Object> postprocessDetect_gpu(float* pData, int num_box, int channels,  std::string file);
