@@ -87,25 +87,9 @@ void Yolov8Face::preprocess(Mat srcimg)
 
 //<<<
 */
-
-
-////只返回检测框,因为在下游的模块�?,置信度和5个关键点这两个信息在后续的模块里没有用到
-void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, bool photo)
-{
-    //cout <<"Yolov8Face::detect 000" <<endl;
-    Mat log_img = srcimg.clone();
-
-    this->preprocess(srcimg);
-    //cout <<"Yolov8Face::detect 111: "<<this->input_height<<" ,"<< this->input_width<<endl;
-    std::vector<int64_t> input_img_shape = {1, 3, this->input_height, this->input_width};
-    Value input_tensor_ = Value::CreateTensor<float>(memory_info_handler, this->input_image.data(), this->input_image.size(), input_img_shape.data(), input_img_shape.size());
-    //cout <<"Yolov8Face::detect 222, input_tensor_ = "<< input_tensor_ <<endl;
-    Ort::RunOptions runOptions;
-    //cout <<"Yolov8Face::detect 222::" << this->input_names.data()<< "  "<<input_names[0]<<endl;
-    vector<Value> ort_outputs = this->ort_session->Run(runOptions, this->input_names.data(), &input_tensor_, 1, this->output_names.data(), output_names.size());
-    //cout <<"Yolov8Face::detect 333" <<endl;
-    float *pdata = ort_outputs[0].GetTensorMutableData<float>(); /// 形状�?(1, 20, 8400),不考虑�?0维batchsize，每一列的长度20,�?4个元素是检测框坐标(cx,cy,w,h)，第4个元素是置信度，剩下�?15个元素是5个关键点坐标x,y和置信度
-    const int num_box = ort_outputs[0].GetTensorTypeAndShapeInfo().GetShape()[2];
+/*std::vector<Object>*/ void Yolov8Face::postprocessDetect(Mat &log_img, float *pdata,std::vector<Bbox> &boxes, int num_box, int channels,  std::string file)
+{    
+    //std::cout << "num_box is : " << num_box <<std::endl;
     vector<Bbox> bounding_box_raw;
     vector<float> score_raw;
     for (int i = 0; i < num_box; i++)
@@ -125,6 +109,7 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, 
     }
     vector<int> keep_inds = nms(bounding_box_raw, score_raw, this->iou_threshold);
     const int keep_num = keep_inds.size();
+    std::cout << "keep num " <<keep_num <<std::endl;
     boxes.clear();
     boxes.resize(keep_num);
     for (int i = 0; i < keep_num; i++)
@@ -157,7 +142,7 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, 
             
         }
     }
-    if(photo)
+    //if(photo)
     {
         int pos = file.find_last_of('/');
         cout << "pos of photo issss:::: " << pos <<endl;
@@ -166,6 +151,95 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, 
 
         imwrite(path_photo+"/log.jpg", log_img);
     }
+
+
+}
+
+
+
+////只返回检测框,因为在下游的模块�?,置信度和5个关键点这两个信息在后续的模块里没有用到
+void Yolov8Face::detect(Mat srcimg, std::vector<Bbox> &boxes, std::string file, bool photo)
+{
+    //cout <<"Yolov8Face::detect 000" <<endl;
+    Mat log_img = srcimg.clone();
+
+    this->preprocess(srcimg);
+    //cout <<"Yolov8Face::detect 111: "<<this->input_height<<" ,"<< this->input_width<<endl;
+    std::vector<int64_t> input_img_shape = {1, 3, this->input_height, this->input_width};
+    Value input_tensor_ = Value::CreateTensor<float>(memory_info_handler, this->input_image.data(), this->input_image.size(), input_img_shape.data(), input_img_shape.size());
+    //cout <<"Yolov8Face::detect 222, input_tensor_ = "<< input_tensor_ <<endl;
+    Ort::RunOptions runOptions;
+    //cout <<"Yolov8Face::detect 222::" << this->input_names.data()<< "  "<<input_names[0]<<endl;
+    vector<Value> ort_outputs = this->ort_session->Run(runOptions, this->input_names.data(), &input_tensor_, 1, this->output_names.data(), output_names.size());
+    //cout <<"Yolov8Face::detect 333" <<endl;
+    float *pdata = ort_outputs[0].GetTensorMutableData<float>(); /// 形状�?(1, 20, 8400),不考虑�?0维batchsize，每一列的长度20,�?4个元素是检测框坐标(cx,cy,w,h)，第4个元素是置信度，剩下�?15个元素是5个关键点坐标x,y和置信度
+    const int num_box = ort_outputs[0].GetTensorTypeAndShapeInfo().GetShape()[2];
+    int channels = ort_outputs[0].GetTensorTypeAndShapeInfo().GetShape()[1];
+    postprocessDetect(log_img, pdata, boxes, num_box,channels, file);
+
+    /*
+    std::cout << "num_box is : " << num_box <<std::endl;
+    vector<Bbox> bounding_box_raw;
+    vector<float> score_raw;
+    for (int i = 0; i < num_box; i++)
+    {
+        const float score = pdata[4 * num_box + i];
+        if (score > this->conf_threshold)
+        {
+            float xmin = (pdata[i] - 0.5 * pdata[2 * num_box + i]) * this->ratio_width;            ///(cx,cy,w,h)转到(x,y,w,h)并还原到原图
+            float ymin = (pdata[num_box + i] - 0.5 * pdata[3 * num_box + i]) * this->ratio_height; ///(cx,cy,w,h)转到(x,y,w,h)并还原到原图
+            float xmax = (pdata[i] + 0.5 * pdata[2 * num_box + i]) * this->ratio_width;            ///(cx,cy,w,h)转到(x,y,w,h)并还原到原图
+            float ymax = (pdata[num_box + i] + 0.5 * pdata[3 * num_box + i]) * this->ratio_height; ///(cx,cy,w,h)转到(x,y,w,h)并还原到原图
+            ////坐标的越界检查保护，可以添加一�?
+            bounding_box_raw.emplace_back(Bbox{xmin, ymin, xmax, ymax});
+            score_raw.emplace_back(score);
+            /// 剩下�?5个关键点坐标的计�?,暂时不写,因为在下游的模块里没有用�?5个关键点坐标信息
+        }
+    }
+    vector<int> keep_inds = nms(bounding_box_raw, score_raw, this->iou_threshold);
+    const int keep_num = keep_inds.size();
+    std::cout << "keep num " <<keep_num <<std::endl;
+    boxes.clear();
+    boxes.resize(keep_num);
+    for (int i = 0; i < keep_num; i++)
+    {
+        const int ind = keep_inds[i];
+        boxes[i] = bounding_box_raw[ind];
+    }
+    cv::Scalar color = cv::Scalar(1, 1, 1);
+
+    if(boxes.size() > 0)
+    {          
+        //cv::Rect rect(cv::Point(boxes[0].xmin, boxes[0].ymin), float(boxes[0].xmax - boxes[0].xmin), float(boxes[0].ymax -boxes[0].ymin));
+        
+        // int x = boxes[0].xmin;  
+        // int y = boxes[0].ymin;  
+        // int width = boxes[0].xmax - boxes[0].xmin;  
+        // int height= boxes[0].ymax - boxes[0].ymin;  
+        // cv::Rect rect(x, y, width, height);
+        // cv::rectangle(srcimg, rect, cv::Scalar(0, 0, 255) ,4);
+
+        for (size_t i = 0; i < keep_num; i++)
+        {
+            
+            int x = boxes[i].xmin;  
+            int y = boxes[i].ymin;  
+            int width = boxes[i].xmax - boxes[i].xmin;  
+            int height= boxes[i].ymax - boxes[i].ymin;  
+            cv::Rect rect(x, y, width, height);
+            cv::rectangle(log_img, rect, (i == 0) ? cv::Scalar(0, 0, 255):cv::Scalar(0, 0, 0) ,4);
+            
+        }
+    }
+    if(photo)
+    {
+        int pos = file.find_last_of('/');
+        cout << "pos of photo issss:::: " << pos <<endl;
+        std::string path_photo(file.substr(0, pos));
+
+
+        imwrite(path_photo+"/log.jpg", log_img);
+    }*/
 }
 void Yolov8Face::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale) {
     // If segmentation information is present, start with that
