@@ -397,7 +397,7 @@ void Yolov8Face::drawObjectLabels(cv::Mat &image, const std::vector<Object> &obj
 
         cv::rectangle(image, cv::Rect(cv::Point(x, y), cv::Size(labelSize.width, labelSize.height + baseLine)), (index == 0) ? cv::Scalar(0, 0, 255):txt_bk_color, -1);
 
-        cv::putText(image, text, cv::Point(x, y + labelSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.35 * scale, txt_bk_color , scale);
+        cv::putText(image, text, cv::Point(x, y + labelSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.35 * scale, cv::Scalar(0, 255, 255) , scale);
 #endif
         // Pose estimation
         index += 1;

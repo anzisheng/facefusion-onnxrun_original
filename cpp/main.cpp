@@ -224,9 +224,9 @@ string swap_faces(string photo, string style){
 	detect_68landmarks_net->detect(target_img, boxes2[position], target_landmark_5);	
 
 	Mat swapimg = swap_face_net->process(target_img, source_face_embedding, target_landmark_5);
-	cv::imwrite("swapimg_0.jpg", swapimg);
+	//cv::imwrite("swapimg_0.jpg", swapimg);
 	resultimg = enhance_face_net->process(swapimg, target_landmark_5);
-    cv::imwrite("swapimg_1.jpg", resultimg);
+    //cv::imwrite("swapimg_1.jpg", resultimg);
 
 	//string result = fmt::format("{}_{}.jpg",  photo.substr(0, photo.rfind(".")), style.substr(0, style.rfind(".")));
 
