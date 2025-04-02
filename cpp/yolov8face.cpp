@@ -87,7 +87,7 @@ void Yolov8Face::preprocess(Mat srcimg)
 
 //<<<
 */
-/*std::vector<Object>*/ void Yolov8Face::postprocessDetect(Mat &log_img, float *pdata,std::vector<Bbox> &boxes, int num_box, int channels,  std::string file)
+void Yolov8Face::postprocessDetect(Mat &log_img, float *pdata,std::vector<Bbox> &boxes, int num_box, int channels,  std::string file)
 {    
     //std::cout << "num_box is : " << num_box <<std::endl;
     vector<Bbox> bounding_box_raw;
@@ -142,7 +142,7 @@ void Yolov8Face::preprocess(Mat srcimg)
             
         }
     }
-    //if(photo)
+    // if(photo)
     // {
     //     int pos = file.find_last_of('/');
     //     cout << "pos of photo issss:::: " << pos <<endl;
@@ -333,14 +333,14 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Object> &boxes, std::string file
     //if(photo)
     drawObjectLabels(log_img, boxes, 2);
     std::cout << "hello99999999l"<<endl;
-    // {
-    //     int pos = file.find_last_of('/');
-    //     cout << "pos of photo issss:::: " << pos <<endl;
-    //     std::string path_photo(file.substr(0, pos));
+     {
+        int pos = file.find_last_of('/');
+        cout << "pos of photo issss:::: " << pos <<endl;
+        std::string path_photo(file.substr(0, pos));
 
 
-    //     imwrite(path_photo+"/log.jpg", log_img);
-    // }
+        imwrite(path_photo+"/log.jpg", log_img);
+    }
 }
 void Yolov8Face::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale) {
     // If segmentation information is present, start with that
@@ -360,7 +360,9 @@ void Yolov8Face::drawObjectLabels(cv::Mat &image, const std::vector<Object> &obj
     }
 
     // Bounding boxes and annotations
+    int index = 0;
     for (auto &object : objects) {
+
         // Choose the color
         //int colorIndex = object.label % .size(); // We have only defined 80 unique colors
         cv::Scalar color = cv::Scalar(1, 1, 1);
@@ -369,14 +371,14 @@ void Yolov8Face::drawObjectLabels(cv::Mat &image, const std::vector<Object> &obj
         if (meanColor > 0.5) {
             txtColor = cv::Scalar(0, 0, 0);
         } else {
-            txtColor = cv::Scalar(255, 255, 255);
+            txtColor = cv::Scalar(255,  255);
         }
 
         const auto &rect = object.rect;
 
         // Draw rectangles and text
         char text[256];
-        sprintf(text, "%s %.1f%%", CLASS_NAMES[object.label].c_str(), object.probability * 100);
+        sprintf(text, "%s %.1f%%", "person", object.probability * 100);
 
         int baseLine = 0;
         cv::Size labelSize = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.35 * scale, scale, &baseLine);
@@ -391,13 +393,14 @@ void Yolov8Face::drawObjectLabels(cv::Mat &image, const std::vector<Object> &obj
         
         cv::rectangle(image, rect, color * 255, scale + 1);
         std::cout << "draw......" << std::endl;
-        //cv::imwrite("abc.jpg", image);
+       
 
-        cv::rectangle(image, cv::Rect(cv::Point(x, y), cv::Size(labelSize.width, labelSize.height + baseLine)), txt_bk_color, -1);
+        cv::rectangle(image, cv::Rect(cv::Point(x, y), cv::Size(labelSize.width, labelSize.height + baseLine)), (index == 0) ? cv::Scalar(0, 0, 255):txt_bk_color, -1);
 
-        cv::putText(image, text, cv::Point(x, y + labelSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.35 * scale, txtColor, scale);
+        cv::putText(image, text, cv::Point(x, y + labelSize.height), cv::FONT_HERSHEY_SIMPLEX, 0.35 * scale, txt_bk_color , scale);
 #endif
         // Pose estimation
+        index += 1;
         
     }
 }

@@ -148,6 +148,12 @@ string swap_faces(string photo, string style){
 
 	detect_face_net->detect(source_img, boxes_object , photo, true);
 
+    // for(int position = 0; position < boxes_object.size(); position++)
+    // {
+    //     cout << "boxes_object [0] is " << boxes_object[position].rect.x << "  "<<boxes_object[position].rect.y << " "
+    //     << boxes_object[position].rect.width<<" " << boxes_object[position].rect.height;
+    // }
+
 	cout << "hello12244"<<endl;
 	int position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
 	vector<Point2f> face_landmark_5of68;
@@ -155,26 +161,73 @@ string swap_faces(string photo, string style){
      boxes[position].xmin =  boxes_object[position].rect.x;
      boxes[position].ymin =  boxes_object[position].rect.y; 
      boxes[position].xmax =  boxes_object[position].rect.x + boxes_object[position].rect.width;
-     boxes[position].xmin =  boxes_object[position].rect.y +  boxes_object[position].rect.height;
-cout << "hello12255"<<endl;
+     boxes[position].ymax =  boxes_object[position].rect.y +  boxes_object[position].rect.height;
+
+    //  cout << "boxes [0] is " <<boxes[position].xmin << "  "<<boxes[position].ymin << " "
+    //     <<  boxes[position].xmax<<" " << boxes_object[position].rect.height;
+
+
+    cout << "hello12255"<<endl;
+
+    {
+        int i= 0;
+        int x = boxes[i].xmin;  
+        int y = boxes[i].ymin;  
+        int width = boxes[i].xmax - boxes[i].xmin;  
+        int height= boxes[i].ymax - boxes[i].ymin;  
+        cv::Rect rect(x, y, width, height);
+        //detect_face_net->drawObjectLabels(source_img, boxes[0], 2);
+        cv::rectangle(source_img, rect, (i == 0) ? cv::Scalar(0, 0, 255):cv::Scalar(0, 0, 0) ,4);
+        cv::imwrite("source_img.jpg", source_img);
+
+    }
+
+
 	vector<Point2f> face68landmarks = detect_68landmarks_net->detect(source_img, boxes[position], face_landmark_5of68);
+    
+
+    cout <<  "68 landmark size:"<< face68landmarks.size()<< endl;
+    cout <<  "68 landmark size:"<< face_landmark_5of68.size()<< endl;
 	cout << "hello1226655"<<endl;
 	vector<float> source_face_embedding = face_embedding_net->detect(source_img, face_landmark_5of68);
-	
-	detect_face_net->detect(target_img, boxes_object, style, false);
+    cout << "source_face_embedding size:" << source_face_embedding.size() << std::endl;
+    
 
+    vector<Object> boxes_object2;
+
+	detect_face_net->detect(target_img, boxes_object2, style, true);//false);
+    //cv::imwrite("target.jpg", target_img);
+
+    vector<Bbox> boxes2(boxes_object2.size());
+     boxes2[position].xmin =  boxes_object2[position].rect.x;
+     boxes2[position].ymin =  boxes_object2[position].rect.y; 
+     boxes2[position].xmax =  boxes_object2[position].rect.x + boxes_object2[position].rect.width;
+     boxes2[position].ymax =  boxes_object2[position].rect.y +  boxes_object2[position].rect.height;
+    
+    //  {
+    //     int i= 0;
+    //     int x = boxes2[i].xmin;  
+    //     int y = boxes2[i].ymin;  
+    //     int width = boxes2[i].xmax - boxes2[i].xmin;  
+    //     int height= boxes2[i].ymax - boxes2[i].ymin;  
+    //     cv::Rect rect(x, y, width, height);
+    //     //detect_face_net->drawObjectLabels(source_img, boxes[0], 2);
+    //     cv::rectangle(target_img, rect, (i == 0) ? cv::Scalar(0, 0, 255):cv::Scalar(0, 0, 0) ,4);
+    //     cv::imwrite("target_img.jpg", target_img);
+
+    // }
+   
 
 	position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
 	vector<Point2f> target_landmark_5;
-
-
     
-	detect_68landmarks_net->detect(target_img, boxes[position], target_landmark_5);
-	
+	detect_68landmarks_net->detect(target_img, boxes2[position], target_landmark_5);	
 
 	Mat swapimg = swap_face_net->process(target_img, source_face_embedding, target_landmark_5);
-	
+	cv::imwrite("swapimg_0.jpg", swapimg);
 	resultimg = enhance_face_net->process(swapimg, target_landmark_5);
+    cv::imwrite("swapimg_1.jpg", resultimg);
+
 	//string result = fmt::format("{}_{}.jpg",  photo.substr(0, photo.rfind(".")), style.substr(0, style.rfind(".")));
 
     //string result = photo.substr(0, photo.rfind("."))+"_"+style;//fmt::format("{}_{}.jpg",  photo.substr(0, photo.rfind(".")), style.substr(0, style.rfind(".")));
