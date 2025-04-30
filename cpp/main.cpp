@@ -525,6 +525,15 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
     // 将Json::Value对象转换为字符串
     std::string output2 = Json::writeString(writer2, root2);
     //s->send(hdl, output2, msg->get_opcode()); 
+    Json::Value root3;
+    root3["state"] = "Busy";
+    Json::StreamWriterBuilder writer3;
+    std::string output3 = Json::writeString(writer3,root3);   
+    s->send(hdl, output3, websocketpp::frame::opcode::text);
+    root3["state"] = "Over";
+    //Json::StreamWriterBuilder writer3;
+    output3 = Json::writeString(writer3,root3);   
+ 
     
     for (int i = 0; i < StyleNum; i++)
     {
@@ -534,7 +543,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
         std::string output = Json::writeString(writer, root_message);
         messageVec.push_back(output);
         }
-    std::thread([s, hdl,StyleNum,PhotoName, writer, root, output2, messageVec]() {
+    std::thread([s, hdl,StyleNum,PhotoName, writer, root, output2, output3,messageVec]() {
 
         for (int i = 0; i < StyleNum; i++)
         {   preciseStopwatch stopwatch2;
@@ -548,7 +557,10 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
     //cout << "++++++++++++++ all handle "<<StyleNum<< " pictures;" << "total time is  "<< totalElapsedTimeMs/1000 <<" S"<<endl;
         }          
 
-        s->send(hdl, output2, websocketpp::frame::opcode::text);
+         s->send(hdl, output2, websocketpp::frame::opcode::text);
+         s->send(hdl, output3, websocketpp::frame::opcode::text);
+
+
     }).detach(); // 分离线程，避免阻塞主线程
 
     
@@ -744,7 +756,11 @@ void get_all_mac_addresses() {
     }
 }
 
+enum State {BUZY, OVER};
+
 int main() {
+
+    State state = OVER;
     
     const char* cert_file = "server.crt";
     get_all_mac_addresses();
