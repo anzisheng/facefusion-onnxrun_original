@@ -540,10 +540,10 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
     root4["type"] = "notice";
     Json::StreamWriterBuilder writer4;
     std::string output4 = Json::writeString(writer4,root4);   
-    s->send(hdl, output4, websocketpp::frame::opcode::text);
+    //s->send(hdl, output4, websocketpp::frame::opcode::text);
     //root3["state"] = root["sessionID"].asString()+" Over";
     //Json::StreamWriterBuilder writer3;
-    output4 = Json::writeString(writer4,root4);   
+    //output4 = Json::writeString(writer4,root4);   
  
 
     for (int i = 0; i < StyleNum; i++)
