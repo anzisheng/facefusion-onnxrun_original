@@ -519,22 +519,33 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
     Json::StreamWriterBuilder writer;
     
     Json::Value root2;
-    root2["type"] = "Complete!";
+    root2["type"] =  root["sessionID"].asString()+" Complete!";
     //root["result_name"] = message.result_name; 
     Json::StreamWriterBuilder writer2;
     // 将Json::Value对象转换为字符串
     std::string output2 = Json::writeString(writer2, root2);
     //s->send(hdl, output2, msg->get_opcode()); 
     Json::Value root3;
-    root3["state"] = "Busy";
+    root3["state"] = root["sessionID"].asString()+" Busy";
     Json::StreamWriterBuilder writer3;
     std::string output3 = Json::writeString(writer3,root3);   
     s->send(hdl, output3, websocketpp::frame::opcode::text);
-    root3["state"] = "Over";
+    root3["state"] = root["sessionID"].asString()+" Over";
     //Json::StreamWriterBuilder writer3;
     output3 = Json::writeString(writer3,root3);   
  
-    
+    Json::Value root4;
+    root4["sessionID"] = root["sessionID"].asString();
+    root4["state"] = "Complete!";
+    root4["type"] = "notice";
+    Json::StreamWriterBuilder writer4;
+    std::string output4 = Json::writeString(writer4,root4);   
+    s->send(hdl, output4, websocketpp::frame::opcode::text);
+    //root3["state"] = root["sessionID"].asString()+" Over";
+    //Json::StreamWriterBuilder writer3;
+    output4 = Json::writeString(writer4,root4);   
+ 
+
     for (int i = 0; i < StyleNum; i++)
     {
         root_message["type"] = "generating";
@@ -543,7 +554,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
         std::string output = Json::writeString(writer, root_message);
         messageVec.push_back(output);
         }
-    std::thread([s, hdl,StyleNum,PhotoName, writer, root, output2, output3,messageVec]() {
+    std::thread([s, hdl,StyleNum,PhotoName, writer, root, output2, output3,output4,messageVec]() {
 
         for (int i = 0; i < StyleNum; i++)
         {   preciseStopwatch stopwatch2;
@@ -559,6 +570,7 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
 
          s->send(hdl, output2, websocketpp::frame::opcode::text);
          s->send(hdl, output3, websocketpp::frame::opcode::text);
+ s->send(hdl, output4, websocketpp::frame::opcode::text);
 
 
     }).detach(); // 分离线程，避免阻塞主线程
