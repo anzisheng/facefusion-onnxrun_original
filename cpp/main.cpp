@@ -1,3 +1,4 @@
+#include "main.h"
 #include "yolov8face.h"
 #include "face68landmarks.h"
 #include "facerecognizer.h"
@@ -64,6 +65,10 @@ using websocketpp::lib::bind;
 
 // pull out the type of messages sent by our config
 typedef server::message_ptr message_ptr;
+
+// #define BUZY "BUSY"
+// #define OVER "OVER"
+// #define ERROR "ERROR"
 
 
 ///////////////////////
@@ -143,6 +148,12 @@ string swap_faces(string photo, string style){
 	preciseStopwatch stopwatch;
 	Mat source_img = imread(source_path);
 	Mat target_img = imread(target_path);
+    if(target_img.empty())
+    {
+        cout << "not found image: " <<style;
+        state = State::ERROR;
+        return style;
+    }
 
     vector<Object> boxes_object;
 
@@ -440,7 +451,6 @@ void consumerFunction(server* s, websocketpp::connection_hdl hdl,message_ptr msg
         string swap_result = "temp";//swap_faces(message.photo,message.style, s, hdl, msg);
         cout << "swap_result:   " << swap_result <<endl;
         TaskResult  reultMsg = TaskResult(swap_result);        
-        //将消息添加到队列
         //{
             //std::lock_guard<std::mutex> lock(mtx_result);
             //resultQueue.push(reultMsg);
@@ -448,7 +458,6 @@ void consumerFunction(server* s, websocketpp::connection_hdl hdl,message_ptr msg
         //}
            // 通知等待的消费者线程
          //cvs_result.notify_one();
-
         
         // 检查是否为终止信号
         //  if (message.style == "-11.jpg") {
@@ -549,7 +558,9 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
     for (int i = 0; i < StyleNum; i++)
     {
         root_message["type"] = "generating";
-        root_message["result_name"] = combine_path(PhotoName, root["styleName"][i]["name"].asString());//"abc";//swap_result;
+         cout <<"style images is " << root["styleName"][i]["name"].asString();//"
+         cout <<"style images is " << root["styleName"][i]["name"];
+        root_message["result_name"] = combine_path(PhotoName, root["styleName"][i]["name"].asString());
         cout << "combine name ......" <<root_message["result_name"]<<endl;
         std::string output = Json::writeString(writer, root_message);
         messageVec.push_back(output);
@@ -559,10 +570,24 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
         for (int i = 0; i < StyleNum; i++)
         {   preciseStopwatch stopwatch2;
             std::string swap_result = swap_faces(PhotoName, root["styleName"][i]["name"].asString());
-            //root_message["result_name"] = "abc";//swap_result;
-            //std::string output = Json::writeString(writer, root_message);
-            //messageVec.push_back((output));
+            if(state == State::ERROR)
+            {
+                Json::Value root5;
+                root5["sessionID"] = root["sessionID"].asString();
+                root5["type"] = "Error!";//root["styleName"][i]["name"].asString() + " not found!" ;
+                root5["state"] = "Not Found!" ;
+                root5["reason"] = root["styleName"][i]["name"].asString();
+                //root4["type"] = "notice";
+                Json::StreamWriterBuilder writer5;
+                std::string output5 = Json::writeString(writer5,root5); 
+                s->send(hdl, output5, websocketpp::frame::opcode::text);
+                break;
+            }
+            else
+            {
+
             s->send(hdl, messageVec[i], websocketpp::frame::opcode::text);
+            }
             auto totalElapsedTimeMs = stopwatch2.elapsedTime<float, std::chrono::milliseconds>();
             cout << "=================this picture spend  "<< totalElapsedTimeMs/1000 <<" S"<<endl;
     //cout << "++++++++++++++ all handle "<<StyleNum<< " pictures;" << "total time is  "<< totalElapsedTimeMs/1000 <<" S"<<endl;
@@ -768,11 +793,12 @@ void get_all_mac_addresses() {
     }
 }
 
-enum State {BUZY, OVER};
+//enum class State {BUZY, OVER, ERROR};
+
 
 int main() {
 
-    State state = OVER;
+    
     
     const char* cert_file = "server.crt";
     get_all_mac_addresses();
