@@ -144,7 +144,7 @@ string swap_faces(string photo, string style){
 	
 	
 	
-	////cout << "wwww999"<<endl;
+	////cout << "wwww999"<<endl;/
 	preciseStopwatch stopwatch;
 	Mat source_img = imread(source_path);
 	Mat target_img = imread(target_path);
@@ -572,7 +572,9 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
             std::string swap_result = swap_faces(PhotoName, root["styleName"][i]["name"].asString());
             if(state == State::ERROR)
             {
+                
                 Json::Value root5;
+                state = State::OVER;
                 root5["sessionID"] = root["sessionID"].asString();
                 root5["type"] = "Error!";//root["styleName"][i]["name"].asString() + " not found!" ;
                 root5["state"] = "Not Found!" ;
@@ -860,9 +862,12 @@ int main() {
         // Set logging settings
         echo_server.set_access_channels(websocketpp::log::alevel::all);
         echo_server.clear_access_channels(websocketpp::log::alevel::frame_payload);
-
+        boost::asio::io_service io_service;
         // Initialize Asio
-        echo_server.init_asio();
+        echo_server.init_asio(&io_service);
+
+        echo_server.clear_access_channels(websocketpp::log::alevel::all);
+        echo_server.set_access_channels(websocketpp::log::alevel::connect | websocketpp::log::alevel::disconnect);
 
         // Register our message handler
         echo_server.set_message_handler(bind(&on_message,&echo_server,::_1,::_2));
