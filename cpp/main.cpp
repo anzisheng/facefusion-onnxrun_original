@@ -166,7 +166,9 @@ string swap_faces(string photo, string style){
     // }
 
 	cout << "hello12244"<<endl;
-	int position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
+	if(boxes_object.size() > 0)
+    {
+    int position = 0; ////一张图片里可能有多个人脸，这里只考虑1个人脸的情况
 	vector<Point2f> face_landmark_5of68;
 	vector<Bbox> boxes(boxes_object.size());
      boxes[position].xmin =  boxes_object[position].rect.x;
@@ -318,6 +320,12 @@ string swap_faces(string photo, string style){
     
 
     return currentPath.string();//result;
+}
+else
+{
+    state = State::NoFace;
+    return "no face";
+}
 
 
 }
@@ -584,6 +592,22 @@ void on_message(server* s, websocketpp::connection_hdl hdl, message_ptr msg) {
                 std::string output5 = Json::writeString(writer5,root5); 
                 s->send(hdl, output5, websocketpp::frame::opcode::text);
                 break;
+            }
+            else if(state == State::NoFace)
+            {
+                cout << "no face......";
+                Json::Value root6;
+                state = State::OVER;
+                root6["sessionID"] = root["sessionID"].asString();
+                root6["type"] = "notice";//"NoFace!";//root["styleName"][i]["name"].asString() + " not found!" ;
+                root6["state"] = "No Face!" ;
+                root6["reason"] = "0.jpg has no face";//root["styleName"][i]["name"].asString();
+                //root4["type"] = "notice";
+                Json::StreamWriterBuilder writer6;
+                std::string output6 = Json::writeString(writer6,root6); 
+                s->send(hdl, output6, websocketpp::frame::opcode::text);
+                break;
+
             }
             else
             {

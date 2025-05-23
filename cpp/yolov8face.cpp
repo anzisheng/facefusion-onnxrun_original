@@ -1,5 +1,5 @@
 #include "yolov8face.h"
-
+#include "main.h"
 using namespace cv;
 using namespace std;
 using namespace Ort;
@@ -331,7 +331,14 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Object> &boxes, std::string file
         }
     }*/
     //if(photo)
+    // if(boxes.size() <= 0)
+    // {
+    //     state = State::NoFace;   
+    // }
+    // else 
+    {
     drawObjectLabels(log_img, boxes, 2);
+    
     std::cout << "hello99999999l"<<endl;
      {
         int pos = file.find_last_of('/');
@@ -341,6 +348,7 @@ void Yolov8Face::detect(Mat srcimg, std::vector<Object> &boxes, std::string file
 
         imwrite(path_photo+"/log.jpg", log_img);
     }
+}
 }
 void Yolov8Face::drawObjectLabels(cv::Mat &image, const std::vector<Object> &objects, unsigned int scale) {
     // If segmentation information is present, start with that
